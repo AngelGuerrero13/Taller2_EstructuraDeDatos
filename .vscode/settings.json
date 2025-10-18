@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "sparsematrix": "cpp",
+        "memory_resource": "cpp",
+        "type_traits": "cpp"
+    }
+}
