@@ -1,7 +1,9 @@
 #include "Nodo.hpp";
 
-Nodo::Nodo(int dato){
+Nodo::Nodo(int dato,int fila, int columna){
     this->dato = dato;
+    this->fila = fila;
+    this->columna = columna;
     this->izquierda = NULL;
     this->derecha = NULL;
     this->arriba = NULL;
@@ -11,7 +13,12 @@ Nodo::Nodo(int dato){
 int Nodo::getDato(){
     return this->dato;
 }
-
+int Nodo::getFila(){
+    return this->fila;
+}
+int Nodo::getColumna(){
+    return this->columna;
+}
 Nodo* Nodo::getIzquierda(){
     return this->izquierda;
 }
