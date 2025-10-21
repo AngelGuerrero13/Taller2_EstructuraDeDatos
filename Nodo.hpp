@@ -5,13 +5,17 @@ using namespace std;
 class Nodo{
     private:
         int dato;
+        int fila;
+        int columna;
         Nodo* izquierda;
         Nodo* derecha;
         Nodo* arriba;
         Nodo* abajo;
     public:
-        Nodo(int dato);
+        Nodo(int dato,int fila, int columna);
         int getDato();
+        int getFila();
+        int getColumna();
         Nodo* getIzquierda();
         Nodo* getDerecha();
         Nodo* getArriba();
