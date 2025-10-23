@@ -155,6 +155,105 @@ int SparseMatrix::get(int fila, int columna){
 }
 
 void SparseMatrix::remove(int fila, int columna){
+     if(fila < 0 || columna < 0){ //Si la fila o columna es negativa no se pueden acceder a los datos
+        return;
+    }
+
+    Nodo* prevFila = start;              //Apunta al nodo anterior a la cabecera (start)
+    Nodo* cabFila = start->getAbajo();   //Apunta a la primera cabecera de fila
+
+    while(cabFila != start && cabFila->getFila() < fila){ //Mientras la cabecera de la fila sea distinta de start y la fila actual sea menor a la buscada
+        prevFila = cabFila;
+        cabFila = cabFila->getAbajo();   //Seguimos bajando
+    }
+
+    if(cabFila == start || cabFila->getFila() != fila){ //Si llegamos a start o la fila actual no coincide con la buscada
+        return; //No hay fila
+    }
+
+    Nodo* prevNodo = cabFila;              //Apunta al nodo anterior dentro de la fila actual
+    Nodo* actual = cabFila->getDerecha();  //Apunta al primer nodo de la fila actual
+
+    while(actual != cabFila && actual->getColumna() < columna){ //Mientras no volvamos a la cabecera y la columna actual sea menor a la buscada
+        prevNodo = actual;
+        actual = actual->getDerecha();     //Avanzamos por la fila (a la derecha)
+    }
+
+    if(actual == cabFila || actual->getColumna() != columna){ //Si volvimos a la cabecera o no encontramos la columna
+        return; //No hay columna (no existe el nodo a eliminar)
+    }
+
+    prevNodo->setDerecho(actual->getDerecha());           //El nodo anterior apunta al siguiente (saltando el nodo eliminado)
+    actual->getDerecha()->setIzquierdo(prevNodo);         //El siguiente nodo apunta atrás al anterior
+
+    Nodo* prevColumna = start;               //Apunta a la cabecera anterior de columna
+    Nodo* cabColumna = start->getDerecha();  //Apunta a la primera cabecera de columna
+
+    while(cabColumna != start && cabColumna->getColumna() < columna){ //Mientras no lleguemos a start y la columna actual sea menor a la buscada
+        prevColumna = cabColumna;
+        cabColumna = cabColumna->getDerecha(); //Avanzamos hacia la derecha (siguiente columna)
+    }
+
+    if(cabColumna != start && cabColumna->getColumna() == columna){ //Si encontramos la cabecera de la columna correspondiente
+
+        Nodo* prevNodoColumna = cabColumna;           //Apunta al nodo anterior dentro de la columna
+        Nodo* actualColumna = cabColumna->getAbajo(); //Apunta al primer nodo de la columna actual
+
+        while(actualColumna != cabColumna && actualColumna->getFila() < fila){ //Mientras no volvamos a la cabecera y la fila actual sea menor a la buscada
+            prevNodoColumna = actualColumna;
+            actualColumna = actualColumna->getAbajo(); //Avanzamos hacia abajo
+        }
+
+        if(actualColumna == actual){ //Si el nodo actual de la columna coincide con el que vamos a eliminar
+            prevNodoColumna->setAbajo(actualColumna->getAbajo());        //El nodo anterior apunta hacia abajo al siguiente
+            actualColumna->getAbajo()->setArriba(prevNodoColumna);       //El siguiente apunta hacia arriba al anterior
+        }
+    }
+
+    // Eliminar el nodo encontrado
+
+    delete actual; //Eliminamos el nodo de la memoria
+    ceros--;   //Reducimos el contador de nodos no nulos
+
+    // Si la fila quedó vacía, eliminar su cabecera
+
+    if(cabFila->getDerecha() == cabFila){ //Si la cabecera apunta a sí misma (sin nodos a la derecha)
+        cabFila->getArriba()->setAbajo(cabFila->getAbajo()); //Desconectamos la cabecera de la fila del anillo vertical
+        cabFila->getAbajo()->setArriba(cabFila->getArriba());
+        delete cabFila; //Eliminamos la cabecera de la fila
+    }
+
+    // Si la columna quedó vacía, eliminar su cabecera
+
+    if(cabColumna != start && cabColumna->getAbajo() == cabColumna){ //Si la cabecera de la columna existe y apunta a sí misma (sin nodos abajo)
+        cabColumna->getIzquierda()->setDerecho(cabColumna->getDerecha()); //Desconectamos la cabecera del anillo horizontal
+        cabColumna->getDerecha()->setIzquierdo(cabColumna->getIzquierda());
+        delete cabColumna; //Eliminamos la cabecera de la columna
+    }
+
+    // Recalcular los límites (filas y columnas máximas)
+
+    if(fila == maxFilas || columna == maxColumnas){ //Si fila ingresada es igual a maximo de filas o columna ingresada es igual al maximo de columnas
+
+        int nuevaMaxFila = -1;
+        int nuevaMaxColumna = -1;
+
+        //Recorremos toda la matriz para encontrar los nuevos valores máximos
+
+        for(Nodo* f = start->getAbajo(); f != start; f = f->getAbajo()){ //Recorremos todas las filas
+            for(Nodo* c = f->getDerecha(); c != f; c = c->getDerecha()){ //Recorremos cada nodo dentro de la fila
+                if(c->getFila() > nuevaMaxFila){ 
+                    nuevaMaxFila = c->getFila(); //Actualizamos la fila máxima
+                }
+                if(c->getColumna() > nuevaMaxColumna){ 
+                    nuevaMaxColumna = c->getColumna(); //Actualizamos la columna máxima
+                }
+            }
+        }
+
+        maxFilas = nuevaMaxFila;       //Actualizamos el valor máximo de fila
+        maxColumnas = nuevaMaxColumna; //Actualizamos el valor máximo de columna
+    }
 
 }
 
@@ -185,33 +284,80 @@ int SparseMatrix::density(){
     int count = 0;
     int maxFila = -1, maxCol = -1;
 
-    Nodo* filacabeza = start->getAbajo();
+    Nodo* filacabeza = start->getAbajo(); //filacabeza recorre las filas usando abajo
     while(filacabeza != start){
-        Nodo* nodo = filacabeza->getDerecha();
-        while(nodo != filacabeza){
-            count++;
-            if(nodo->getFila()> maxFila) maxFila = nodo->getFila();
-            if(nodo->getColumna() > maxCol) maxCol = nodo->getColumna();
-            nodo = nodo->getDerecha();
+        Nodo* columnaActual  = filacabeza->getDerecha();// columnaActual recorre los nodos de la fila usando derecha
+        while(columnaActual  != filacabeza){
+            count++; // cuenta los nodos no nulos
+            if(columnaActual ->getFila()> maxFila) maxFila = columnaActual ->getFila();
+            if(columnaActual ->getColumna() > maxCol) maxCol = columnaActual ->getColumna();
+            columnaActual  = columnaActual ->getDerecha();
         }
         filacabeza = filacabeza->getAbajo();
     }
     
     if(maxFila == -1 || maxCol == -1) return 0;
-    int total = (maxFila + 1) * (maxCol + 1);
+
+    int total = (maxFila + 1) * (maxCol + 1); // tamaño maximo actual de la matriz
+
     if(total == 0) return 0;
 
-    double dens = count /total;
+    double dens = count /total; // densidad como valor decimal
     int porcentaje = dens*100;
 
-    return porcentaje;
+    return porcentaje; // retorna la densidad en porcentaje
 }
 
 SparseMatrix* SparseMatrix::multiply(SparseMatrix* second){
-    
+    if(!second) return nullptr;
+
+    SparseMatrix* resultado = new SparseMatrix();
+
+    // Recorremos todos los nodos no nulos de la primera matriz
+    Nodo* a = start;
+    while(a != nullptr){
+        int filaA = a->getFila();
+        int colA = a->getColumna();
+        int valA = a->getDato();
+        
+        // Recorremos los nodos de la segunda matriz
+        Nodo* b = second->start;
+        while (b != nullptr){
+            int filaB = b->getFila();
+            int colB = b->getColumna();
+            int valB = b->getDato();
+
+            // si coinciden la columna de A y la fila de B se multiplican
+            if(colA == filaB){
+                int producto = valA * valB;
+
+                // obtenemos el valor actual en la pocion fila A y columna B 
+                int actual = resultado->get(filaA , colB);
+
+                // Insertamos el nuevo valor
+                resultado->add(actual+producto, filaA, colB);   
+            }
+
+            b = b->getDerecha();
+        }
+
+        a = a->getDerecha();
+    }
+
+    return resultado;
 
 }
 
 SparseMatrix::~SparseMatrix(){
+    Nodo* actual = start;
+
+    while(actual != nullptr){
+        Nodo* siguiente = actual->getDerecha(); //guardamos el siguiente nodo
+        delete actual; // liberamos el actual
+        actual = siguiente; // avancamos al siguiente
+
+    }
+
+    start = nullptr; //por seguridad apuntamos a nullptr
 
 }
