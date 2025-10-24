@@ -1,7 +1,9 @@
 #include <iostream>
-#include <ctime>
+#include <chrono>
 #include <cstdlib>
 #include "SparseMatrix.hpp"
+using namespace std;
+using namespace std::chrono;
 
 void crearMatriz(SparseMatrix* matriz, int filas, int columnas, int cantidadDatos){
     int inserted = 0;
@@ -22,21 +24,22 @@ void crearMatriz(SparseMatrix* matriz, int filas, int columnas, int cantidadDato
 };
 
 int main(){
-    clock_t inicio, fin;
-    double tiempo;
+    
    
     
     SparseMatrix* matriz = new SparseMatrix();
 
-    inicio = clock(); //guardar el tiempo inicial
-    crearMatriz(matriz,15,15,50);
-    
-    
-    fin = clock();//guarda el tiempo final
-    tiempo = double(fin -inicio) / CLOCKS_PER_SEC; //conversion a segundos
-    
-    cout << "Tiempo de ejecucion: " << tiempo << " segundos" << endl;
+    auto inicio = high_resolution_clock::now();
+    crearMatriz(matriz,80,80,5000);
+    auto fin = high_resolution_clock::now();
 
+    
+    auto duracion_micro = duration_cast<microseconds>(fin - inicio);
+    cout << "Tiempo en microsegundos: " << duracion_micro.count() << " µs" << endl;
+
+    
+    auto duracion_nano = duration_cast<nanoseconds>(fin - inicio);
+    cout << "Tiempo en nanosegundos: " << duracion_nano.count() << " ns" << endl;
 
     return 0;
-}
+}   

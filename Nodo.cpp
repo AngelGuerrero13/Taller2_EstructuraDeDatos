@@ -1,4 +1,4 @@
-#include "Nodo.hpp";
+#include "Nodo.hpp"
 
 Nodo::Nodo(int dato,int fila, int columna){
     this->dato = dato;

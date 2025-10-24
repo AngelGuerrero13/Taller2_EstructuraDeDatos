@@ -2,6 +2,10 @@
     "files.associations": {
         "sparsematrix": "cpp",
         "memory_resource": "cpp",
-        "type_traits": "cpp"
+        "type_traits": "cpp",
+        "cstdlib": "cpp",
+        "iostream": "cpp",
+        "ostream": "cpp",
+        "chrono": "cpp"
     }
 }
