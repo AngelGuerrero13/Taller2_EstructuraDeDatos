@@ -308,45 +308,54 @@ int SparseMatrix::density(){
     return porcentaje; // retorna la densidad en porcentaje
 }
 
-SparseMatrix* SparseMatrix::multiply(SparseMatrix* second){
-    if(!second) return nullptr;
+SparseMatrix* SparseMatrix::multiply(SparseMatrix* second) {
+    if (!second) return nullptr;
 
-    SparseMatrix* resultado = new SparseMatrix();
+    SparseMatrix* C = new SparseMatrix();
 
-    // Recorremos todos los nodos no nulos de la primera matriz
-    Nodo* a = start;
-    while(a != nullptr){
-        int filaA = a->getFila();
-        int colA = a->getColumna();
-        int valA = a->getDato();
-        
-        // Recorremos los nodos de la segunda matriz
-        Nodo* b = second->start;
-        while (b != nullptr){
-            int filaB = b->getFila();
-            int colB = b->getColumna();
-            int valB = b->getDato();
-
-            // si coinciden la columna de A y la fila de B se multiplican
-            if(colA == filaB){
-                int producto = valA * valB;
-
-                // obtenemos el valor actual en la pocion fila A y columna B 
-                int actual = resultado->get(filaA , colB);
-
-                // Insertamos el nuevo valor
-                resultado->add(actual+producto, filaA, colB);   
-            }
-
-            b = b->getDerecha();
-        }
-
-        a = a->getDerecha();
+    // Si alguna no tiene datos, el resultado es vacío
+    if (this->start->getAbajo() == this->start || second->start->getDerecha() == second->start) {
+        return C;
     }
 
-    return resultado;
+    // Recorremos cada FILA de A (cabeceras de fila cuelgan "abajo" desde start)
+    for (Nodo* filaA = this->start->getAbajo(); filaA != this->start; filaA = filaA->getAbajo()) {
 
+        // Recorremos cada COLUMNA de B (cabeceras de columna cuelgan "derecha" desde start)
+        for (Nodo* colB = second->start->getDerecha(); colB != second->start; colB = colB->getDerecha()) {
+
+            int suma = 0;
+
+            // Dos punteros:
+            // a recorre la fila i de A (a la derecha) -> elementos (i, k)
+            // b recorre la columna j de B (hacia abajo) -> elementos (k, j)
+            Nodo* a = filaA->getDerecha();
+            Nodo* b = colB->getAbajo();
+
+            while (a != filaA && b != colB) {
+                int kA = a->getColumna(); // k en (i,k)
+                int kB = b->getFila();    // k en (k,j)
+
+                if (kA == kB) {
+                    suma += a->getDato() * b->getDato();
+                    a = a->getDerecha();
+                    b = b->getAbajo();
+                } else if (kA < kB) {
+                    a = a->getDerecha();
+                } else { // kA > kB
+                    b = b->getAbajo();
+                }
+            }
+
+            if (suma != 0) {
+                C->add(suma, filaA->getFila(), colB->getColumna());
+            }
+        }
+    }
+
+    return C;
 }
+
 
 SparseMatrix::~SparseMatrix(){
     Nodo* r = start->getAbajo();

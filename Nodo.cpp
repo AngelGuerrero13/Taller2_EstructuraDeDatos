@@ -49,5 +49,5 @@ void Nodo::setAbajo(Nodo* abajo){
 }
 
 Nodo::~Nodo(){
-    cout << "Nodo eliminado" << endl;
+    
 }
